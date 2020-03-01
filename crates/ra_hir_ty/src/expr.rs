@@ -69,16 +69,20 @@ impl<'a, 'b> ExprValidator<'a, 'b> {
         spread: Option<ExprId>,
         db: &impl HirDatabase,
     ) {
+        dbg!(&_path);
         if spread.is_some() {
             return;
         };
-        let variant_def: VariantId = match self.infer.variant_resolution_for_expr(id) {
+        dbg!("got past spread");
+        let variant_def: VariantId = match dbg!(self.infer.variant_resolution_for_expr(id)) {
             Some(VariantId::UnionId(_)) | None => return,
             Some(it) => it,
         };
+        dbg!(&variant_def);
         if let VariantId::UnionId(_) = variant_def {
             return;
         }
+        dbg!("got past union id check");
 
         let variant_data = variant_data(db, variant_def);
 
