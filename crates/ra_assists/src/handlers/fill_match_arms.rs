@@ -254,6 +254,33 @@ mod tests {
     }
 
     #[test]
+    fn fill_match_arms_missing_arm() {
+        check_assist(
+            fill_match_arms,
+            r#"
+            enum E { X, Y }
+
+            fn main() {
+                match E::X {
+                    E::X => { // important work },
+                    <|>
+                }
+            }
+            "#,
+            r#"
+            enum E { X, Y }
+
+            fn main() {
+                match <|>E::X {
+                    E::X => { // important work },
+                    E::Y => unimplemented!(),
+                }
+            }
+            "#,
+        );
+    }
+
+    #[test]
     fn fill_match_arms_qualifies_path() {
         check_assist(
             fill_match_arms,
