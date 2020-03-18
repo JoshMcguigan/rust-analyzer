@@ -15,9 +15,22 @@ pub(crate) fn expand(rules: &crate::MacroRules, input: &tt::Subtree) -> ExpandRe
 }
 
 fn expand_rules(rules: &[crate::Rule], input: &tt::Subtree) -> ExpandResult<tt::Subtree> {
+    // If the macro is invoked without a closing paren or bracket, the opening paren is
+    // passed as part of the args. We remove that here to improve the performance of the
+    // macro matching algorithm.
+    let mut input = input.clone();
+    match (input.delimiter.is_none(), input.token_trees.first()) {
+        (true, Some(tt::TokenTree::Leaf(tt::Leaf::Punct(tt::Punct { char, .. })))) => {
+            if *char == '(' || *char == '[' || *char == '{' {
+                input.token_trees.remove(0);
+            }
+        }
+        _ => {}
+    }
+
     let mut match_: Option<(matcher::Match, &crate::Rule)> = None;
     for rule in rules {
-        let new_match = match matcher::match_(&rule.lhs, input) {
+        let new_match = match matcher::match_(&rule.lhs, &input) {
             Ok(m) => m,
             Err(_e) => {
                 // error in pattern parsing

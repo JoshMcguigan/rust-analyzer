@@ -959,6 +959,112 @@ mod tests {
     }
 
     #[test]
+    fn completes_in_println_macro_without_closing_parens() {
+        assert_debug_snapshot!(
+                    do_reference_completion(
+                        r"
+                macro_rules! println { () => {}; ($($arg: tt)*) => { $($arg);* }; }
+                fn quux(x: i32) {
+                    let y = 92;
+                    println!(<|>
+                }
+                "
+                    ),
+                    @r###"
+        [
+            CompletionItem {
+                label: "println!",
+                source_range: [180; 180),
+                delete: [180; 180),
+                insert: "println!($0)",
+                kind: Macro,
+                detail: "macro_rules! println",
+            },
+            CompletionItem {
+                label: "quux(…)",
+                source_range: [180; 180),
+                delete: [180; 180),
+                insert: "quux(${1:x})$0",
+                kind: Function,
+                lookup: "quux",
+                detail: "fn quux(x: i32)",
+                trigger_call_info: true,
+            },
+            CompletionItem {
+                label: "x",
+                source_range: [180; 180),
+                delete: [180; 180),
+                insert: "x",
+                kind: Binding,
+                detail: "i32",
+            },
+            CompletionItem {
+                label: "y",
+                source_range: [180; 180),
+                delete: [180; 180),
+                insert: "y",
+                kind: Binding,
+                detail: "i32",
+            },
+        ]
+        "###
+        );
+    }
+
+    #[test]
+    fn completes_in_println_macro() {
+        assert_debug_snapshot!(
+                    do_reference_completion(
+                        r"
+                macro_rules! println { () => {}; ($($arg: tt)*) => { $($arg);* }; }
+                fn quux(x: i32) {
+                    let y = 92;
+                    println!(<|>);
+                }
+                "
+                    ),
+                    @r###"
+        [
+            CompletionItem {
+                label: "println!",
+                source_range: [180; 180),
+                delete: [180; 180),
+                insert: "println!($0)",
+                kind: Macro,
+                detail: "macro_rules! println",
+            },
+            CompletionItem {
+                label: "quux(…)",
+                source_range: [180; 180),
+                delete: [180; 180),
+                insert: "quux(${1:x})$0",
+                kind: Function,
+                lookup: "quux",
+                detail: "fn quux(x: i32)",
+                trigger_call_info: true,
+            },
+            CompletionItem {
+                label: "x",
+                source_range: [180; 180),
+                delete: [180; 180),
+                insert: "x",
+                kind: Binding,
+                detail: "i32",
+            },
+            CompletionItem {
+                label: "y",
+                source_range: [180; 180),
+                delete: [180; 180),
+                insert: "y",
+                kind: Binding,
+                detail: "i32",
+            },
+        ]
+        "###
+        );
+    }
+
+    #[test]
     fn completes_unresolved_uses() {
         assert_debug_snapshot!(
             do_reference_completion(
