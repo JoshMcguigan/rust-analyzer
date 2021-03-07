@@ -113,6 +113,17 @@ impl<'a> RenderContext<'a> {
         node.docs(self.db())
     }
 
+    fn active_name(&self) -> Option<String> {
+        if let Some(record_field) = &self.completion.record_field_syntax {
+            let (struct_field, _local) = self.completion.sema.resolve_record_field(record_field)?;
+            Some(struct_field.name(self.db()).to_string())
+        } else if let Some(active_parameter) = &self.completion.active_parameter {
+            Some(active_parameter.name.clone())
+        } else {
+            None
+        }
+    }
+
     fn active_name_and_type(&self) -> Option<(String, Type)> {
         if let Some(record_field) = &self.completion.record_field_syntax {
             mark::hit!(record_field_type_match);
@@ -960,6 +971,25 @@ fn f() { let x: u8 = b$0; }
             expect![[r#"
                 fn bar() [type]
                 fn baz() []
+                fn f() []
+            "#]],
+        );
+    }
+
+    #[test]
+    fn score_fn_type_and_name_match() {
+        mark::check!(score_fn_type_and_name_match);
+        check_scores(
+            r#"
+struct A { bar: u8 }
+fn baz() -> u8 { 0 }
+fn bar() -> u8 { 0 }
+fn f() { A { bar: b$0 }; }
+"#,
+            expect![[r#"
+                fn bar() [type+name]
+                fn baz() [type]
+                st A []
                 fn f() []
             "#]],
         );

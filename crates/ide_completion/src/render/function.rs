@@ -59,7 +59,16 @@ impl<'a> FunctionRender<'a> {
         if let Some(expected_type) = &self.ctx.completion.expected_type {
             if &self.func.ret_type(self.ctx.db()) == expected_type {
                 mark::hit!(score_fn_type_match);
-                item = item.set_score(CompletionScore::TypeMatch);
+                if let Some(expected_name) = self.ctx.active_name() {
+                    if self.func.name(self.ctx.db()).to_string() == expected_name {
+                        mark::hit!(score_fn_type_and_name_match);
+                        item = item.set_score(CompletionScore::TypeAndNameMatch);
+                    } else {
+                        item = item.set_score(CompletionScore::TypeMatch);
+                    }
+                } else {
+                    item = item.set_score(CompletionScore::TypeMatch);
+                }
             }
         }
 
