@@ -113,6 +113,12 @@ impl<'a> RenderContext<'a> {
         node.docs(self.db())
     }
 
+    // TODO
+    //
+    // Why is self.completion.expected_type different from the type returned by
+    // active_name_and_type?
+    //
+    // combine this function with below? Or split them entirely to active_name/active_type?
     fn active_name(&self) -> Option<String> {
         if let Some(record_field) = &self.completion.record_field_syntax {
             let (struct_field, _local) = self.completion.sema.resolve_record_field(record_field)?;
