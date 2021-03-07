@@ -8,6 +8,7 @@ use test_utils::mark;
 use crate::{
     item::{CompletionItem, CompletionItemKind, CompletionKind, ImportEdit},
     render::{builder_ext::Params, RenderContext},
+    CompletionScore,
 };
 
 pub(crate) fn render_fn<'a>(
@@ -42,16 +43,27 @@ impl<'a> FunctionRender<'a> {
 
     fn render(self, import_to_add: Option<ImportEdit>) -> CompletionItem {
         let params = self.params();
-        CompletionItem::new(CompletionKind::Reference, self.ctx.source_range(), self.name.clone())
-            .kind(self.kind())
-            .set_documentation(self.ctx.docs(self.func))
-            .set_deprecated(
-                self.ctx.is_deprecated(self.func) || self.ctx.is_deprecated_assoc_item(self.func),
-            )
-            .detail(self.detail())
-            .add_call_parens(self.ctx.completion, self.name, params)
-            .add_import(import_to_add)
-            .build()
+        let mut item = CompletionItem::new(
+            CompletionKind::Reference,
+            self.ctx.source_range(),
+            self.name.clone(),
+        )
+        .kind(self.kind())
+        .set_documentation(self.ctx.docs(self.func))
+        .set_deprecated(
+            self.ctx.is_deprecated(self.func) || self.ctx.is_deprecated_assoc_item(self.func),
+        )
+        .detail(self.detail())
+        .add_import(import_to_add);
+
+        if let Some(expected_type) = &self.ctx.completion.expected_type {
+            if &self.func.ret_type(self.ctx.db()) == expected_type {
+                mark::hit!(score_fn_type_match);
+                item = item.set_score(CompletionScore::TypeMatch);
+            }
+        }
+
+        item.add_call_parens(self.ctx.completion, self.name, params).build()
     }
 
     fn detail(&self) -> String {

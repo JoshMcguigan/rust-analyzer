@@ -552,6 +552,7 @@ fn main() { som$0 }
                         ),
                         lookup: "main",
                         detail: "-> ()",
+                        score: TypeMatch,
                     },
                     CompletionItem {
                         label: "something_deprecated()",
@@ -564,6 +565,7 @@ fn main() { som$0 }
                         lookup: "something_deprecated",
                         detail: "-> ()",
                         deprecated: true,
+                        score: TypeMatch,
                     },
                     CompletionItem {
                         label: "something_else_deprecated()",
@@ -576,6 +578,7 @@ fn main() { som$0 }
                         lookup: "something_else_deprecated",
                         detail: "-> ()",
                         deprecated: true,
+                        score: TypeMatch,
                     },
                 ]
             "#]],
@@ -629,6 +632,7 @@ impl S {
                         documentation: Documentation(
                             "Method docs",
                         ),
+                        score: TypeMatch,
                     },
                     CompletionItem {
                         label: "foo",
@@ -726,6 +730,7 @@ fn foo(s: S) { s.$0 }
                         kind: Method,
                         lookup: "the_method",
                         detail: "-> ()",
+                        score: TypeMatch,
                     },
                 ]
             "#]],
@@ -939,6 +944,23 @@ fn f(foo: &Foo) { f(foo, w$0) }
                 st Foo []
                 fn f(…) []
                 lc foo []
+            "#]],
+        );
+    }
+
+    #[test]
+    fn score_fn_type_match() {
+        mark::check!(score_fn_type_match);
+        check_scores(
+            r#"
+fn baz() -> u32 { 0 }
+fn bar() -> u8 { 0 }
+fn f() { let x: u8 = b$0; }
+"#,
+            expect![[r#"
+                fn bar() [type]
+                fn baz() []
+                fn f() []
             "#]],
         );
     }
